@@ -9,19 +9,21 @@ public class CharacterList {
    
    //directory of characters
    public ArrayList<CharacterNode> dictionary;
+   //indicator of whether there was a fatal error
    public boolean fatal = false;
    
-   public CharacterList(String dictionary_file) throws IOException{
-      File file = new File(dictionary_file);
-      if(file.exists()) {
+   public CharacterList(String dictionary_file) {
+      try {
+         File file = new File(dictionary_file);
          this.dictionary = new ArrayList<CharacterNode>();
          Scanner dict_file = new Scanner(file);
          read(dict_file);
-      } else {
+      } catch(IOException e) {
          System.out.println("dictionary.txt does not exist");
-         this.fatal = true;
+         System.out.println("Program terminated.");
+         fatal = true;
+         System.exit(0);
       }
-      
    }
    
    //adds character to the dictionary

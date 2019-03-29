@@ -21,20 +21,18 @@ public class EncoderDecoder {
       generateMat(encodeKey);
    }
    
+   public SimpleMatrix gen_safe_mat(double[][] plain_vec) {
+      SimpleMatrix plain_mat = new SimpleMatrix(plain_vec);
+      return encode(plain_mat);
+   }
+   
    /*
 	encrypt using change of basis matrix
-	takes username or password to encode
-   returns encrytped matrix
+	takes vector of bytes to encode
+   returns encrytped vector
    */
-	public SimpleMatrix encode(String credential) {
-      SimpleMatrix converted = generateConvertedMat(credential);
-      SimpleMatrix encrypted = new SimpleMatrix(1,1);
-      for (int i = 0; i < converted.numCols(); i++) {
-         SimpleMatrix vector = converted.extractVector(false, i);
-         SimpleMatrix result = encryptionMatrix.mult(vector);
-         encrypted = encrypted.combine(0, i, result);
-      }
-      return encrypted;  
+	public SimpleMatrix encode(SimpleMatrix plain_mat) {
+      return encryptionMatrix.mult(plain_mat);
    }
    
    /*
@@ -192,9 +190,11 @@ public class EncoderDecoder {
       int count = 0;
       for (int k = 0; k < 4; k++) {
          for (int w = 0; w < 4; w++) {
+            //System.out.print(contain.get(count) + " ");
             matArray[k][w] = contain.get(count);
             count++;
          }
+        // System.out.println();
       }
       return matArray;
    }
