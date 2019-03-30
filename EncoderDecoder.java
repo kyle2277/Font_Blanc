@@ -5,27 +5,19 @@ import org.ejml.simple.*;
 core encoder and decoder
 requires and encoder key to be accessed
 */
-public class EncoderDecoder {
+public class EncoderDecoder_FB {
    
    //master password
    private String encodeKey;
    //change of basis matrix
    private SimpleMatrix encryptionMatrix;
-   //list of characters in dictionary txt
-   private CharacterList dictionary;
    
    //constructs encoder object, takes master password and dictionary   
-   public EncoderDecoder(String encodeKey, CharacterList dictionary) {
-      this.dictionary = dictionary;
+   public EncoderDecoder(String encodeKey) {
       this.encodeKey = encodeKey;
       generateMat(encodeKey);
    }
-   
-   public SimpleMatrix gen_safe_mat(double[][] plain_vec) {
-      SimpleMatrix plain_mat = new SimpleMatrix(plain_vec);
-      return encode(plain_mat);
-   }
-   
+      
    /*
 	encrypt using change of basis matrix
 	takes vector of bytes to encode
@@ -36,43 +28,32 @@ public class EncoderDecoder {
    }
    
    /*
-	takes credential to convert and turns string values into a matrix to be encrypted
-	returns encoded matrix
+   Takes file byte stream and creates vectors of n bytes to be encrypted
+   returns byte array
    */
-	public SimpleMatrix generateConvertedMat(String credential) {
-      int length = credential.length();
-      int quads = length/4;
-      if (length % 4 != 0) {
-         quads++;
-      }
-      double[][] conv = new double[4][quads];
-      for (int i = 0; i <= quads - 1; i++) {
-         for(int j = 0; j <= 3; j++) {
-            if (!credential.isEmpty()) {
-               String letter = credential.substring(0,1);
-               CharacterNode node = dictionary.getNode(letter);
-               char c = letter.charAt(0);
-               int random = (int)(Math.random()*10);
-               if (letter.equals(node.primary)) {
-                  //if primary, first integer is random number between 10 and 20
-                  random = random+10;
-               } else {
-                  //if secondary, first integer is random number between 20 and 30
-                  random = random+20;
-               }
-               double composite = (random*100)+node.index;
-               conv[j][i] = composite;  
-               credential = credential.substring(1);
-            } else {
-               conv[j][i] = 0;
-            }
-            
+   public static double[][] fours(FileInputStream in) throws IOException {
+      int c;
+      double[][] plain_vec = new double[4][1];
+      for(int i = 0; i < 4; i++) {
+         if((c = in.read()) != -1) {
+            System.out.print(c + " ");
+            plain_vec[i][0] = c;
+         } else {
+            System.out.print(EOF + " ");
+            plain_vec[i][0] = EOF;
+            end = true;
          }
       }
-      SimpleMatrix converted = new SimpleMatrix(conv);
-      //System.out.println("Encoded (before scrambling) matrix:");
-      //converted.print();
-      return converted;
+      System.out.println();
+      return plain_vec;
+   }
+   
+   /*
+   Takes byte array and returns byte vector to be encrypted
+   */
+   public SimpleMatrix gen_safe_mat(double[][] plain_vec) {
+      SimpleMatrix plain_mat = new SimpleMatrix(plain_vec);
+      return encode(plain_mat);
    }
    
    /*

@@ -1,131 +1,72 @@
 import java.util.*;
+import java.io.*;
 import org.ejml.simple.*;
 
 /*
 core encoder and decoder
 requires and encoder key to be accessed
 */
-public class EncoderDecoder {
+public class EncoderDecoder_FB {
    
    //master password
    private String encodeKey;
    //change of basis matrix
    private SimpleMatrix encryptionMatrix;
-   //list of characters in dictionary txt
-   private CharacterList dictionary;
+   public boolean fatal = false;
+   // end of file byte indicator
+   public final int EOF = -1;
+   public boolean run = true;
+   
    
    //constructs encoder object, takes master password and dictionary   
-   public EncoderDecoder(String encodeKey, CharacterList dictionary) {
-      this.dictionary = dictionary;
+   public EncoderDecoder_FB(String encodeKey) {
       this.encodeKey = encodeKey;
       generateMat(encodeKey);
    }
    
-   public SimpleMatrix gen_safe_mat(double[][] plain_vec) {
-      SimpleMatrix plain_mat = new SimpleMatrix(plain_vec);
-      return encode(plain_mat);
+   /*
+   Takes byte array and returns byte vector to be encrypted
+   */
+   public SimpleMatrix gen_safe_vec(byte[] plain_vec) {
+      double[][] intermediate = new double[4][1];
+      for(int i = 0; i < 4; i++) {
+         double byte_val = (double) plain_vec[i];
+         if(i >= plain_vec.length) {
+            intermediate[i][0] = EOF;
+         } else {
+            intermediate[i][0] = byte_val;
+         }
+      } 
+      SimpleMatrix unencrypted_vec = new SimpleMatrix(intermediate);
+      return encryptVec(unencrypted_vec);
    }
    
    /*
-	encrypt using change of basis matrix
+	Encrypt using change of basis matrix
 	takes vector of bytes to encode
    returns encrytped vector
    */
-	public SimpleMatrix encode(SimpleMatrix plain_mat) {
-      return encryptionMatrix.mult(plain_mat);
+	public SimpleMatrix encryptVec(SimpleMatrix unencrypted_vec) {
+      return encryptionMatrix.mult(unencrypted_vec);
    }
    
    /*
-	takes credential to convert and turns string values into a matrix to be encrypted
-	returns encoded matrix
+   Takes encoded byte array and returns unencrypted byte arrray
    */
-	public SimpleMatrix generateConvertedMat(String credential) {
-      int length = credential.length();
-      int quads = length/4;
-      if (length % 4 != 0) {
-         quads++;
-      }
-      double[][] conv = new double[4][quads];
-      for (int i = 0; i <= quads - 1; i++) {
-         for(int j = 0; j <= 3; j++) {
-            if (!credential.isEmpty()) {
-               String letter = credential.substring(0,1);
-               CharacterNode node = dictionary.getNode(letter);
-               char c = letter.charAt(0);
-               int random = (int)(Math.random()*10);
-               if (letter.equals(node.primary)) {
-                  //if primary, first integer is random number between 10 and 20
-                  random = random+10;
-               } else {
-                  //if secondary, first integer is random number between 20 and 30
-                  random = random+20;
-               }
-               double composite = (random*100)+node.index;
-               conv[j][i] = composite;  
-               credential = credential.substring(1);
-            } else {
-               conv[j][i] = 0;
-            }
-            
-         }
-      }
-      SimpleMatrix converted = new SimpleMatrix(conv);
-      //System.out.println("Encoded (before scrambling) matrix:");
-      //converted.print();
-      return converted;
+   public SimpleMatrix gen_real_mat(double[][] safe_vec) {
+      SimpleMatrix encrypted_vec = new SimpleMatrix(safe_vec);
+      return decryptVec(encrypted_vec);
    }
    
    /*
-	takes an encoded matrix and converts it back to a string
-	returns username or password in character form
-   */
-	public String decode(SimpleMatrix encoded) {
-      String decoded="";
-      SimpleMatrix decrypted = decryptMat(encoded);
-      //change all values that are very close to zero to zero
-      for (int i = 0; i < decrypted.numCols(); i++) {
-         SimpleMatrix vector = decrypted.extractVector(false, i);
-         for (int j = 0; j < vector.numRows(); j++) {
-            if (vector.get(j,0) < (1.e-4)) {
-               vector.set(j,0,0);
-            }
-            String val = vector.get(j)+"";
-            if (!val.equals("0.0")) {
-               double d_index = Double.valueOf(val.substring(2));
-               int index = (int) Math.round(d_index);
-               //makes sure characters that become close to zero after decryption 
-               //are read as not characters
-               double d_indicator = Double.valueOf(val.substring(0,2));
-               int indicator = (int) Math.round(d_indicator);
-               boolean primary = indicator < 20;
-               if (primary) {
-                  decoded += dictionary.getNode(index).primary;
-               } else {
-                  decoded += dictionary.getNode(index).secondary;
-               }       
-            } 
-         }
-         
-      }
-      //System.out.println("Decrypted matrix:");
-      //decrypted.print();
-      return decoded;
-   }
-   
-   /*
-	takes encrypted matrix and applies change of basis to un-encrypt
-	returns unencrypted matrix
+	Takes encrypted vector and applies change of basis to un-encrypt
+	returns unencrypted vector
 	*/
-   public SimpleMatrix decryptMat(SimpleMatrix encoded) {
+   public SimpleMatrix decryptVec(SimpleMatrix encrypted_vec) {
       //decryption matrix = inverse of encryption matrix
       SimpleMatrix decryptionMat = encryptionMatrix.invert();
-      SimpleMatrix decrypted = new SimpleMatrix(1,1);
-      for (int i = 0; i < encoded.numCols(); i++) {
-         SimpleMatrix vector = encoded.extractVector(false, i);
-         SimpleMatrix result = decryptionMat.mult(vector);
-         decrypted = decrypted.combine(0, i, result);
-      }
-      return decrypted;
+      SimpleMatrix decrypted_vec = decryptionMat.mult(encrypted_vec);
+      return decrypted_vec;
    }
    
    //generates unique change of basis matrix from given master password
@@ -161,6 +102,7 @@ public class EncoderDecoder {
       SimpleMatrix gen = new SimpleMatrix(matArray);
       if (gen.determinant() == 0) {
          System.out.println("Invalid password");
+         fatal = true;
       } else {
          encryptionMatrix = gen;
          //encryptionMatrix.print();
