@@ -55,22 +55,32 @@ public class FontBlancMain {
          output.delete();
          in = new FileInputStream(file);
          out = new FileWriter(output, true);
-         boolean run = true;
-         while(run) {
-            byte[] unencrypted_vec = new byte[4];
-            int off = 0;
-            int len = 4;
-            if (in.read(unencrypted_vec, off, len) != -1) {
+         boolean last = false;
+         byte[] unencrypted_vec = new byte[4];
+         int off = 0;
+         int len = 4;
+         if(in.read(unencrypted_vec, off, len) != -1) {
+            while(!last) {
+               byte[] unencrypted_vec_nxt = new byte[4];
+               if (in.read(unencrypted_vec_nxt, off, len) == -1) {
+                  for(int i = 0; i < 4; i++) {
+                     if(unencrypted_vec[i] == 0) {
+                        unencrypted_vec[i] = -1;
+                     }
+                  }
+                  last = true;
+               }
                SimpleMatrix encrypted_vec = e.gen_safe_vec(unencrypted_vec);
+               System.out.println(Arrays.toString(unencrypted_vec));
                for(int i = 0; i < 4; i++) {
-                  System.out.print((byte)unencrypted_vec[i] + " ");
+                  //System.out.print((byte)unencrypted_vec[i] + " ");
+                  System.out.println(encrypted_vec.get(i,0) + " ");
                   out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
                }
                System.out.println();
-            } else {
-               run = false;
-            }
-         }
+               unencrypted_vec = unencrypted_vec_nxt;
+            }                             
+ 			}
       } catch(FileNotFoundException e) {
          fatal("Input file \"" + file + "\" not found");
       } finally {
@@ -81,6 +91,18 @@ public class FontBlancMain {
             out.close();
          }
       }
+   }
+   
+   public static byte[] check_last(byte[] unencrypted_vec) {
+      if(Arrays.asList(unencrypted_vec).contains(-1)) {
+         int i = Arrays.asList(unencrypted_vec).indexOf(-1);
+         for (int j = i; j < 4; j++) {
+            if(unencrypted_vec[i] == 0) {
+               unencrypted_vec[i] = -1;
+            }
+         }
+      }
+      return unencrypted_vec;
    }
    
    public static void decrypt() throws IOException {
@@ -99,14 +121,16 @@ public class FontBlancMain {
                   String line = in.nextLine();
                   line = line.replace("\n", "");
                   safe_vec[i][0] = Double.valueOf(line);
-               } else {
-                  safe_vec[i][0] = 0.0;
                }
             }
             SimpleMatrix decrypted = e.gen_real_mat(safe_vec);
             for(int i = 0; i < 4; i++) {
                System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
-               out.write((byte) Math.round(decrypted.get(i,0)));
+					//prevents writing extra zero value bytes at end of file
+					if(Math.round(decrypted.get(i,0)) != -1) {
+						out.write((byte) Math.round(decrypted.get(i,0)));
+					}
+               
             }
             System.out.println();
          }
