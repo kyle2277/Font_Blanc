@@ -5,13 +5,17 @@ import org.ejml.simple.*;
 
 public class FontBlancMain {
    
+   // encryption object
    public static EncoderDecoder_FB e;
    // path to file
    public static String file;
    // declares whether to encrypt or decrypt file
    public static String EorD;
+   // apended to beginning of every encrypted file
    public static final String encrypt_tag = "encrypted_";
+   // deprecated
    public static final String decrypt_tag = "decrypted_";
+   // file type of encrypted file
    public static final String encrypted_ext = ".txt";
    
    // TODO variable encrypted vector size
@@ -48,14 +52,25 @@ public class FontBlancMain {
       }
 	}
    
-   public static void fatal(String message) {
+   /*
+   Triggered if a fatal error occurs. Writes the error to the console and log file 
+   before program termination
+   */
+   public static void fatal(String message) throws IOException {
+      File fatal = new File("log.txt");
+      fatal.delete();
+      FileWriter out = new FileWriter(fatal, true);
+      out.write("Fatal error:\n");
+      out.write(message);
       System.out.println("Fatal error:");
       System.out.println(message);
-      // write fatal message to output file before exit
+      out.close();
       System.exit(0);
    }
    
-   
+   /*
+   Sends files to encryption or decryption
+   */
    public static void distributor(boolean encrypt, FileInputStream en_in, FileWriter en_out, 
                                  Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
@@ -83,6 +98,10 @@ public class FontBlancMain {
       }
    }
    
+   /*
+   Separates input bytes into vectors of length n, encrypts with change of basis operation
+   Changes all 0 bytes at end of file to EOF character
+   */
    public static void encrypt(FileInputStream in, FileWriter out) throws IOException {
       boolean last = false;
       byte[] unencrypted_vec = new byte[4];
@@ -112,18 +131,10 @@ public class FontBlancMain {
 		}
    }
    
-   public static byte[] check_last(byte[] unencrypted_vec) {
-      if(Arrays.asList(unencrypted_vec).contains(-1)) {
-         int i = Arrays.asList(unencrypted_vec).indexOf(-1);
-         for (int j = i; j < 4; j++) {
-            if(unencrypted_vec[i] == 0) {
-               unencrypted_vec[i] = -1;
-            }
-         }
-      }
-      return unencrypted_vec;
-   }
-   
+   /*
+   Reads encrypted bytes and puts them into vectors of length n. Performs reverse change of basis to decrypt
+   Does not write bytes designated as EOF characters
+   */
    public static void decrypt(Scanner in, FileOutputStream out) throws IOException {
       while(in.hasNextLine()) {
          double[][] safe_vec = new double[4][1];

@@ -15,7 +15,6 @@ public class EncoderDecoder_FB {
    public boolean fatal = false;
    // end of file byte indicator
    public final int EOF = -1;
-   public boolean run = true;
    
    
    //constructs encoder object, takes master password and dictionary   
