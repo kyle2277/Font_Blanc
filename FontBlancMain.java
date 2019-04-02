@@ -12,9 +12,9 @@ public class FontBlancMain {
    public static String EorD;
    public static final String encrypt_tag = "encrypted_";
    public static final String decrypt_tag = "decrypted_";
+   public static final String encrypted_ext = ".txt";
    
    // TODO variable encrypted vector size
-   // TODO encryption file must be txt
    
 	public static void main(String[] args) throws IOException {
       System.out.println("Font Blanc");
@@ -27,12 +27,19 @@ public class FontBlancMain {
          if(e.fatal) {
             fatal("Inviable encryption key");
          }
-         if(EorD.equalsIgnoreCase("encrypt")) {
+         boolean encrypt;
+         if(encrypt = EorD.equalsIgnoreCase("encrypt")) {
             System.out.println("Encrypt");
-            encrypt();   
-         } else if(EorD.equalsIgnoreCase("decrypt")) {
+            FileInputStream in = null;
+            FileWriter out = null;
+            distributor(encrypt, in, out, null, null);
+            //encrypt();   
+         } else if(encrypt = EorD.equalsIgnoreCase("decrypt")) {
             System.out.println("Decrypt");
-            decrypt();
+            Scanner in = null;
+            FileOutputStream out = null;
+            distributor(encrypt, null, null, in, out);
+            //decrypt();
          } else {
             fatal("Invalid arguments");
          }
@@ -48,50 +55,56 @@ public class FontBlancMain {
       System.exit(0);
    }
    
-   public static void encrypt() throws IOException {
-      FileInputStream in = null;
-      FileWriter out = null;
+   
+   public static void distributor(boolean encrypt, FileInputStream en_in, FileWriter en_out, 
+                                 Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
-         File output = new File(encrypt_tag + file + ".txt");
-         output.delete();
-         in = new FileInputStream(file);
-         out = new FileWriter(output, true);
-         boolean last = false;
-         byte[] unencrypted_vec = new byte[4];
-         int off = 0;
-         int len = 4;
-         if(in.read(unencrypted_vec, off, len) != -1) {
-            while(!last) {
-               byte[] unencrypted_vec_nxt = new byte[4];
-               if (in.read(unencrypted_vec_nxt, off, len) == -1) {
-                  for(int i = 0; i < 4; i++) {
-                     if(unencrypted_vec[i] == 0) {
-                        unencrypted_vec[i] = -1;
-                     }
-                  }
-                  last = true;
-               }
-               SimpleMatrix encrypted_vec = e.gen_safe_vec(unencrypted_vec);
-               //System.out.println(Arrays.toString(unencrypted_vec));
-               for(int i = 0; i < 4; i++) {
-                  System.out.print((byte)unencrypted_vec[i] + " ");
-                  //System.out.println(encrypted_vec.get(i,0) + " ");
-                  out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
-               }
-               System.out.println();
-               unencrypted_vec = unencrypted_vec_nxt;
-            }                             
- 			}
+         if(encrypt) {
+            encrypt(en_in, en_out);
+         } else { //decrypt
+            decrypt(de_in, de_out);
+         }
       } catch(FileNotFoundException e) {
          fatal("Input file \"" + file + "\" not found");
       } finally {
-         if(in != null) {
-            in.close();
-         }
-         if(out != null) {
-            out.close();
-         }
+         if (en_in != null) {    en_in.close();    }
+         if(en_out != null) {    en_out.close();   }
+         if (de_in != null) {    de_in.close();    }
+         if(de_out != null) {    de_out.close();   }
       }
+   }
+   
+   public static void encrypt(FileInputStream in, FileWriter out) throws IOException {
+      File output = new File(encrypt_tag + file + encrypted_ext);
+      output.delete();
+      in = new FileInputStream(file);
+      out = new FileWriter(output, true);
+      boolean last = false;
+      byte[] unencrypted_vec = new byte[4];
+      int off = 0;
+      int len = 4;
+      if(in.read(unencrypted_vec, off, len) != -1) {
+         while(!last) {
+            byte[] unencrypted_vec_nxt = new byte[4];
+            if (in.read(unencrypted_vec_nxt, off, len) == -1) {
+               for(int i = 0; i < 4; i++) {
+                  if(unencrypted_vec[i] == 0) {
+                     unencrypted_vec[i] = -1;
+                  }
+               }
+               last = true;
+            }
+            SimpleMatrix encrypted_vec = e.gen_safe_vec(unencrypted_vec);
+            //System.out.println(Arrays.toString(unencrypted_vec));
+            for(int i = 0; i < 4; i++) {
+               System.out.print((byte)unencrypted_vec[i] + " ");
+               //System.out.println(encrypted_vec.get(i,0) + " ");
+               out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
+            }
+            System.out.println();
+            unencrypted_vec = unencrypted_vec_nxt;
+         }                             
+		}
    }
    
    public static byte[] check_last(byte[] unencrypted_vec) {
@@ -106,45 +119,33 @@ public class FontBlancMain {
       return unencrypted_vec;
    }
    
-   public static void decrypt() throws IOException {
-      Scanner in = null;
-      FileOutputStream out = null;
-      try {
-         File input = new File(encrypt_tag + file + ".txt");
-         in = new Scanner(input);
-         File output = new File(decrypt_tag + file);
-         output.delete();
-         out = new FileOutputStream(decrypt_tag + file);
-         while(in.hasNextLine()) {
-            double[][] safe_vec = new double[4][1];
-            for(int i = 0; i < 4; i++) {
-               if(in.hasNextLine()) {
-                  String line = in.nextLine();
-                  line = line.replace("\n", "");
-                  safe_vec[i][0] = Double.valueOf(line);
-               }
+   public static void decrypt(Scanner in, FileOutputStream out) throws IOException {
+      File input = new File(encrypt_tag + file + encrypted_ext);
+      in = new Scanner(input);
+      File output = new File(decrypt_tag + file);
+      output.delete();
+      out = new FileOutputStream(decrypt_tag + file);
+      while(in.hasNextLine()) {
+         double[][] safe_vec = new double[4][1];
+         for(int i = 0; i < 4; i++) {
+            if(in.hasNextLine()) {
+               String line = in.nextLine();
+               line = line.replace("\n", "");
+               safe_vec[i][0] = Double.valueOf(line);
             }
-            SimpleMatrix decrypted = e.gen_real_mat(safe_vec);
-            for(int i = 0; i < 4; i++) {
-               System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
-					//prevents writing extra zero value bytes at end of file
-					if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
-						out.write((byte) Math.round(decrypted.get(i,0)));
-					}
-               
-            }
-            System.out.println();
          }
-      } catch(FileNotFoundException e) {
-         fatal("Input file\"" + file + "\" not found");
-      } finally {
-         if(in != null) {
-            in.close();
+         SimpleMatrix decrypted = e.gen_real_mat(safe_vec);
+         for(int i = 0; i < 4; i++) {
+				//prevents writing extra zero value bytes at end of file
+				if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
+					System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
+               out.write((byte) Math.round(decrypted.get(i,0)));
+				}
+            
          }
-         if(out != null) {
-            out.close();
-         }
+         System.out.println();
       }
+       
    }
    
 }
