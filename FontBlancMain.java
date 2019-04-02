@@ -14,6 +14,7 @@ public class FontBlancMain {
    public static final String decrypt_tag = "decrypted_";
    
    // TODO variable encrypted vector size
+   // TODO encryption file must be txt
    
 	public static void main(String[] args) throws IOException {
       System.out.println("Font Blanc");
@@ -51,7 +52,7 @@ public class FontBlancMain {
       FileInputStream in = null;
       FileWriter out = null;
       try {
-         File output = new File(encrypt_tag + file);
+         File output = new File(encrypt_tag + file + ".txt");
          output.delete();
          in = new FileInputStream(file);
          out = new FileWriter(output, true);
@@ -71,10 +72,10 @@ public class FontBlancMain {
                   last = true;
                }
                SimpleMatrix encrypted_vec = e.gen_safe_vec(unencrypted_vec);
-               System.out.println(Arrays.toString(unencrypted_vec));
+               //System.out.println(Arrays.toString(unencrypted_vec));
                for(int i = 0; i < 4; i++) {
-                  //System.out.print((byte)unencrypted_vec[i] + " ");
-                  System.out.println(encrypted_vec.get(i,0) + " ");
+                  System.out.print((byte)unencrypted_vec[i] + " ");
+                  //System.out.println(encrypted_vec.get(i,0) + " ");
                   out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
                }
                System.out.println();
@@ -109,7 +110,7 @@ public class FontBlancMain {
       Scanner in = null;
       FileOutputStream out = null;
       try {
-         File input = new File(encrypt_tag + file);
+         File input = new File(encrypt_tag + file + ".txt");
          in = new Scanner(input);
          File output = new File(decrypt_tag + file);
          output.delete();
@@ -127,7 +128,7 @@ public class FontBlancMain {
             for(int i = 0; i < 4; i++) {
                System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
 					//prevents writing extra zero value bytes at end of file
-					if(Math.round(decrypted.get(i,0)) != -1) {
+					if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
 						out.write((byte) Math.round(decrypted.get(i,0)));
 					}
                
