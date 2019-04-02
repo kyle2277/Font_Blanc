@@ -34,7 +34,7 @@ public class FontBlancMain {
             FileWriter out = null;
             distributor(encrypt, in, out, null, null);
             //encrypt();   
-         } else if(encrypt = EorD.equalsIgnoreCase("decrypt")) {
+         } else if(EorD.equalsIgnoreCase("decrypt")) {
             System.out.println("Decrypt");
             Scanner in = null;
             FileOutputStream out = null;
@@ -60,8 +60,17 @@ public class FontBlancMain {
                                  Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
          if(encrypt) {
+            File output = new File(encrypt_tag + file + encrypted_ext);
+            output.delete();
+            en_in = new FileInputStream(file);
+            en_out = new FileWriter(output, true);
             encrypt(en_in, en_out);
          } else { //decrypt
+            File input = new File(encrypt_tag + file + encrypted_ext);
+            de_in = new Scanner(input);
+            File output = new File(file);
+            output.delete();
+            de_out = new FileOutputStream(file);
             decrypt(de_in, de_out);
          }
       } catch(FileNotFoundException e) {
@@ -75,10 +84,6 @@ public class FontBlancMain {
    }
    
    public static void encrypt(FileInputStream in, FileWriter out) throws IOException {
-      File output = new File(encrypt_tag + file + encrypted_ext);
-      output.delete();
-      in = new FileInputStream(file);
-      out = new FileWriter(output, true);
       boolean last = false;
       byte[] unencrypted_vec = new byte[4];
       int off = 0;
@@ -120,11 +125,6 @@ public class FontBlancMain {
    }
    
    public static void decrypt(Scanner in, FileOutputStream out) throws IOException {
-      File input = new File(encrypt_tag + file + encrypted_ext);
-      in = new Scanner(input);
-      File output = new File(decrypt_tag + file);
-      output.delete();
-      out = new FileOutputStream(decrypt_tag + file);
       while(in.hasNextLine()) {
          double[][] safe_vec = new double[4][1];
          for(int i = 0; i < 4; i++) {
@@ -141,11 +141,9 @@ public class FontBlancMain {
 					System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
                out.write((byte) Math.round(decrypted.get(i,0)));
 				}
-            
          }
          System.out.println();
-      }
-       
+      }   
    }
    
 }
