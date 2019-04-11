@@ -12,3 +12,22 @@ It is necessary to add the required .jar files from each of these libraries (inc
   * commons-lang3
 
 For running in the terminal, add the paths of all dependencies to the CLASSPATH variable in the makefile.
+
+The program takes three arguments:
+1) Path (absolute or relative) to a file
+2) Password used to encrypt or decrypt the file
+3) The word "encrypt" or "decrypt"
+
+For example, to encrypt a file called file1.txt, the terminal command would be:
+<pre>
+~$ java FontBlancMain file1.txt password encrypt
+</pre>
+This produces a file called 'encrypted_file1.txt.' To decrypt this file, the command would be:
+<pre>
+~$ java FontBlancMain file1.txt password decrypt
+</pre>
+This reproduces the original file.
+The general form:
+<pre>
+~$ java FontBlancMain <path to file> <password> <"encrypt" or "decrypt">
+</pre>
