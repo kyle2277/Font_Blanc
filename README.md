@@ -26,7 +26,6 @@ This produces a file called 'encrypted_file1.txt.' To decrypt this file, the com
 <pre>
 ~$ java FontBlancMain file1.txt password decrypt
 </pre>
-This reproduces the original file.\
 The general form is:
 <pre>
 ~$ java FontBlancMain <path to file> <password> <"encrypt" or "decrypt">
