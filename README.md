@@ -28,5 +28,5 @@ This produces a file called 'encrypted_file1.txt.' To decrypt this file, the com
 </pre>
 The general form is:
 <pre>
-~$ java FontBlancMain <path to file> <password> <"encrypt" or "decrypt">
+~$ java FontBlancMain [path to file] [password] ["encrypt" or "decrypt"]
 </pre>
