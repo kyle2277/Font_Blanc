@@ -7,8 +7,12 @@ public class FontBlancMain {
    
    // encryption object
    public static EncoderDecoder_FB e;
-   // path to file
+   // user input path
+   public static String file_input;
+   //name of file
    public static String file;
+   // path to file
+   public static String file_path;
    // declares whether to encrypt or decrypt file
    public static String EorD;
    // apended to beginning of every encrypted file
@@ -24,7 +28,8 @@ public class FontBlancMain {
       System.out.println("Font Blanc");
       if(args.length == 3) {
          // run program
-         file = args[0];
+         file_input = args[0];
+         split_file(file_input);
          String encodeKey = args[1];
          EorD = args[2];
          e = new EncoderDecoder_FB(encodeKey);
@@ -53,6 +58,26 @@ public class FontBlancMain {
 	}
    
    /*
+   Splits the file path into two components: path to the file and the file name
+   */
+   public static void split_file(String file_input) {
+      String[] split = file_input.split("/");
+      file_path = ".";
+      if(split.length > 1) {
+         //set global file path var
+         for(int i = 1; i < split.length-1; i++) {
+            file_path += "/" + split[i];
+         }
+         file_path += "/";
+      } else {
+         file_path = "./";
+      }
+      //File name var
+      file = split[split.length-1];
+   }
+   
+   
+   /*
    Triggered if a fatal error occurs. Writes the error to the console and log file 
    before program termination
    */
@@ -75,17 +100,18 @@ public class FontBlancMain {
                                  Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
          if(encrypt) {
-            File output = new File(encrypt_tag + file + encrypted_ext);
+            File output = new File(file_path + encrypt_tag + file + encrypted_ext);
             output.delete();
-            en_in = new FileInputStream(file);
+            en_in = new FileInputStream(file_path + file);
             en_out = new FileWriter(output, true);
             encrypt(en_in, en_out);
          } else { //decrypt
-            File input = new File(encrypt_tag + file + encrypted_ext);
+            String file_out = file_path + file;
+            File input = new File(file_path + encrypt_tag + file + encrypted_ext);
             de_in = new Scanner(input);
-            File output = new File(file);
+            File output = new File(file_out);
             output.delete();
-            de_out = new FileOutputStream(file);
+            de_out = new FileOutputStream(file_out);
             decrypt(de_in, de_out);
          }
       } catch(FileNotFoundException e) {
