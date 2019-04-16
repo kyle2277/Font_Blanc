@@ -34,8 +34,7 @@ public class FontBlancMain {
          EorD = args[2];
          e = new EncoderDecoder_FB(encodeKey);
          if(e.fatal) {
-            fatal("Inviable encryption key");
-            return -1;
+            return fatal("Inviable encryption key");
          }
          boolean encrypt;
          if(encrypt = EorD.equalsIgnoreCase("encrypt")) {
@@ -51,12 +50,10 @@ public class FontBlancMain {
             return distributor(encrypt, null, null, in, out);
             //decrypt();
          } else {
-            fatal("Invalid arguments");
-            return -1;
+            return fatal("Invalid arguments");
          }
       } else {
-         fatal("Not enough arguments");
-         return -1;
+         return fatal("Not enough arguments");
       }
 	}
    
@@ -84,7 +81,7 @@ public class FontBlancMain {
    Triggered if a fatal error occurs. Writes the error to the console and log file 
    before program termination
    */
-   public static void fatal(String message) throws IOException {
+   public static int fatal(String message) throws IOException {
       File fatal = new File("log.txt");
       fatal.delete();
       FileWriter out = new FileWriter(fatal, true);
@@ -93,7 +90,7 @@ public class FontBlancMain {
       System.out.println("Fatal error:");
       System.out.println(message);
       out.close();
-      System.exit(0);
+      return -1;
    }
    
    /*
@@ -118,15 +115,14 @@ public class FontBlancMain {
             decrypt(de_in, de_out);
          }
       } catch(FileNotFoundException e) {
-         fatal("Input file \"" + file + "\" not found");
-         return -1;
+         return fatal("Input file \"" + file + "\" not found");
       } finally {
          if (en_in != null) {    en_in.close();    }
          if(en_out != null) {    en_out.close();   }
          if (de_in != null) {    de_in.close();    }
          if(de_out != null) {    de_out.close();   }
       }
-      return 1;
+      return 0;
    }
    
    /*
