@@ -24,7 +24,7 @@ public class FontBlancMain {
    
    // TODO variable encrypted vector size
    
-	public static void main(String[] args) throws IOException {
+	public static int main(String[] args) throws IOException {
       System.out.println("Font Blanc");
       if(args.length == 3) {
          // run program
@@ -35,25 +35,28 @@ public class FontBlancMain {
          e = new EncoderDecoder_FB(encodeKey);
          if(e.fatal) {
             fatal("Inviable encryption key");
+            return -1;
          }
          boolean encrypt;
          if(encrypt = EorD.equalsIgnoreCase("encrypt")) {
             System.out.println("Encrypt");
             FileInputStream in = null;
             FileWriter out = null;
-            distributor(encrypt, in, out, null, null);
+            return distributor(encrypt, in, out, null, null);
             //encrypt();   
          } else if(EorD.equalsIgnoreCase("decrypt")) {
             System.out.println("Decrypt");
             Scanner in = null;
             FileOutputStream out = null;
-            distributor(encrypt, null, null, in, out);
+            return distributor(encrypt, null, null, in, out);
             //decrypt();
          } else {
             fatal("Invalid arguments");
+            return -1;
          }
       } else {
          fatal("Not enough arguments");
+         return -1;
       }
 	}
    
@@ -96,7 +99,7 @@ public class FontBlancMain {
    /*
    Sends files to encryption or decryption
    */
-   public static void distributor(boolean encrypt, FileInputStream en_in, FileWriter en_out, 
+   public static int distributor(boolean encrypt, FileInputStream en_in, FileWriter en_out, 
                                  Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
          if(encrypt) {
@@ -116,12 +119,14 @@ public class FontBlancMain {
          }
       } catch(FileNotFoundException e) {
          fatal("Input file \"" + file + "\" not found");
+         return -1;
       } finally {
          if (en_in != null) {    en_in.close();    }
          if(en_out != null) {    en_out.close();   }
          if (de_in != null) {    de_in.close();    }
          if(de_out != null) {    de_out.close();   }
       }
+      return 1;
    }
    
    /*
