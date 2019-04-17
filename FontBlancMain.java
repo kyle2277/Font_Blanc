@@ -1,135 +1,104 @@
 import java.util.*;
 import java.io.*;
 import java.lang.*;
+import java.sql.Timestamp;
 import org.ejml.simple.*;
 
 public class FontBlancMain {
    
-   // encryption object
-   public static EncoderDecoder_FB e;
-   // user input path
-   public static String file_input;
-   //name of file
-   public static String file;
-   // path to file
-   public static String file_path;
-   // declares whether to encrypt or decrypt file
-   public static String EorD;
-   // apended to beginning of every encrypted file
-   public static final String encrypt_tag = "encrypted_";
-   // deprecated
-   public static final String decrypt_tag = "decrypted_";
-   // file type of encrypted file
-   public static final String encrypted_ext = ".txt";
-   
    // TODO variable encrypted vector size
    
-	public static int main(String[] args) throws IOException {
+	public static int main(String file_input, String encodeKey, String EorD) throws IOException {
       System.out.println("Font Blanc");
-      if(args.length == 3) {
-         // run program
-         file_input = args[0];
-         split_file(file_input);
-         String encodeKey = args[1];
-         EorD = args[2];
-         e = new EncoderDecoder_FB(encodeKey);
-         if(e.fatal) {
-            return fatal("Inviable encryption key");
-         }
-         boolean encrypt;
-         if(encrypt = EorD.equalsIgnoreCase("encrypt")) {
-            System.out.println("Encrypt");
-            FileInputStream in = null;
-            FileWriter out = null;
-            return distributor(encrypt, in, out, null, null);
-            //encrypt();   
-         } else if(EorD.equalsIgnoreCase("decrypt")) {
-            System.out.println("Decrypt");
-            Scanner in = null;
-            FileOutputStream out = null;
-            return distributor(encrypt, null, null, in, out);
-            //decrypt();
-         } else {
-            return fatal("Invalid arguments");
-         }
+      Globals globals = new Globals(file_input, encodeKey, EorD);
+      if(globals.e.fatal) {
+         return fatal(globals, "Inviable encryption key");
+      }
+      boolean encrypt;
+      if(encrypt = globals.EorD.equalsIgnoreCase("encrypt")) {
+         System.out.println("Encrypt");
+         FileInputStream in = null;
+         FileWriter out = null;
+         return distributor(globals, encrypt, in, out, null, null);
+         //encrypt();   
+      } else if(globals.EorD.equalsIgnoreCase("decrypt")) {
+         System.out.println("Decrypt");
+         Scanner in = null;
+         FileOutputStream out = null;
+         return distributor(globals, encrypt, null, null, in, out);
+         //decrypt();
       } else {
-         return fatal("Not enough arguments");
+         return fatal(globals, "Invalid arguments");
       }
 	}
    
-   /*
-   Splits the file path into two components: path to the file and the file name
-   */
-   public static void split_file(String file_input) {
-      String[] split = file_input.split("/");
-      file_path = ".";
-      if(split.length > 1) {
-         //set global file path var
-         for(int i = 1; i < split.length-1; i++) {
-            file_path += "/" + split[i];
-         }
-         file_path += "/";
+   public static int num(String one) {
+      File f = new File(one);
+      if(f.exists()) {
+         return 1;
       } else {
-         file_path = "./";
+         return 0;
       }
-      //File name var
-      file = split[split.length-1];
-   }
-   
+   }   
    
    /*
    Triggered if a fatal error occurs. Writes the error to the console and log file 
    before program termination
    */
-   public static int fatal(String message) throws IOException {
-      File fatal = new File("log.txt");
-      fatal.delete();
+   public static int fatal(Globals globals, String message) throws IOException {
+      File fatal = new File(globals.log_path);
       FileWriter out = new FileWriter(fatal, true);
+      Timestamp time = new Timestamp(System.currentTimeMillis());
+      out.write(time + "\n");
       out.write("Fatal error:\n");
-      out.write(message);
+      out.write(message + "\n\n");
       System.out.println("Fatal error:");
       System.out.println(message);
       out.close();
-      return -1;
+      return 0;
    }
    
    /*
    Sends files to encryption or decryption
    */
-   public static int distributor(boolean encrypt, FileInputStream en_in, FileWriter en_out, 
+   public static int distributor(Globals globals, boolean encrypt, FileInputStream en_in, FileWriter en_out, 
                                  Scanner de_in, FileOutputStream de_out) throws IOException {
       try {
          if(encrypt) {
-            File output = new File(file_path + encrypt_tag + file + encrypted_ext);
-            output.delete();
-            en_in = new FileInputStream(file_path + file);
-            en_out = new FileWriter(output, true);
-            encrypt(en_in, en_out);
+            File output = new File(globals.file_path + globals.encrypt_tag + globals.file + globals.encrypted_ext);
+            if(output.exists()) {
+               output.delete();
+            }
+            en_in = new FileInputStream(globals.file_path + globals.file);
+            en_out = new FileWriter(output);
+            encrypt(globals, en_in, en_out);
          } else { //decrypt
-            String file_out = file_path + file;
-            File input = new File(file_path + encrypt_tag + file + encrypted_ext);
+            String file_out = globals.file_path + globals.file;
+            File input = new File(globals.file_path + globals.encrypt_tag + globals.file + globals.encrypted_ext);
             de_in = new Scanner(input);
             File output = new File(file_out);
-            output.delete();
+            if(output.exists()) {
+               output.delete();
+            }
             de_out = new FileOutputStream(file_out);
-            decrypt(de_in, de_out);
+            decrypt(globals, de_in, de_out);
          }
       } catch(FileNotFoundException e) {
-         return fatal("Input file \"" + file + "\" not found");
+         return fatal(globals, "Input file \"" + globals.file_path + globals.file + "\" not found");
       } finally {
          if (en_in != null) {    en_in.close();    }
          if(en_out != null) {    en_out.close();   }
          if (de_in != null) {    de_in.close();    }
          if(de_out != null) {    de_out.close();   }
       }
-      return 0;
+      return 1;
    }
    
    /*
    Separates input bytes into vectors of length n, encrypts with change of basis operation
    Changes all 0 bytes at end of file to EOF character
    */
-   public static void encrypt(FileInputStream in, FileWriter out) throws IOException {
+   public static void encrypt(Globals globals, FileInputStream in, FileWriter out) throws IOException {
       boolean last = false;
       byte[] unencrypted_vec = new byte[4];
       int off = 0;
@@ -145,7 +114,7 @@ public class FontBlancMain {
                }
                last = true;
             }
-            SimpleMatrix encrypted_vec = e.gen_safe_vec(unencrypted_vec);
+            SimpleMatrix encrypted_vec = globals.e.gen_safe_vec(unencrypted_vec);
             //System.out.println(Arrays.toString(unencrypted_vec));
             for(int i = 0; i < 4; i++) {
                System.out.print((byte)unencrypted_vec[i] + " ");
@@ -162,7 +131,7 @@ public class FontBlancMain {
    Reads encrypted bytes and puts them into vectors of length n. Performs reverse change of basis to decrypt
    Does not write bytes designated as EOF characters
    */
-   public static void decrypt(Scanner in, FileOutputStream out) throws IOException {
+   public static void decrypt(Globals globals, Scanner in, FileOutputStream out) throws IOException {
       while(in.hasNextLine()) {
          double[][] safe_vec = new double[4][1];
          for(int i = 0; i < 4; i++) {
@@ -172,7 +141,7 @@ public class FontBlancMain {
                safe_vec[i][0] = Double.valueOf(line);
             }
          }
-         SimpleMatrix decrypted = e.gen_real_mat(safe_vec);
+         SimpleMatrix decrypted = globals.e.gen_real_mat(safe_vec);
          for(int i = 0; i < 4; i++) {
 				//prevents writing extra zero value bytes at end of file
 				if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
