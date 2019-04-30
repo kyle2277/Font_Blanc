@@ -8,27 +8,29 @@ public class FontBlancMain {
    
    // TODO variable encrypted vector size
    
-	public static int main(String file_input, String encodeKey, String EorD) throws IOException {
+	// public static int main(String file_input, String encodeKey, String EorD) throws IOException {
+   public static void main(String[] args) throws IOException {
       System.out.println("Font Blanc");
-      Globals globals = new Globals(file_input, encodeKey, EorD);
+      // Globals globals = new Globals(file_input, encodeKey, EorD);
+      Globals globals = new Globals(args[0], args[1], args[2]);
       if(globals.e.fatal) {
-         return fatal(globals, "Inviable encryption key");
+         fatal(globals, "Inviable encryption key");
       }
       boolean encrypt;
       if(encrypt = globals.EorD.equalsIgnoreCase("encrypt")) {
          System.out.println("Encrypt");
          FileInputStream in = null;
          FileWriter out = null;
-         return distributor(globals, encrypt, in, out, null, null);
+         distributor(globals, encrypt, in, out, null, null);
          //encrypt();   
       } else if(globals.EorD.equalsIgnoreCase("decrypt")) {
          System.out.println("Decrypt");
          Scanner in = null;
          FileOutputStream out = null;
-         return distributor(globals, encrypt, null, null, in, out);
+         distributor(globals, encrypt, null, null, in, out);
          //decrypt();
       } else {
-         return fatal(globals, "Invalid arguments");
+         fatal(globals, "Invalid arguments");
       }
 	}
    
@@ -55,6 +57,7 @@ public class FontBlancMain {
       System.out.println("Fatal error:");
       System.out.println(message);
       out.close();
+      System.exit(0);
       return 0;
    }
    
@@ -117,11 +120,11 @@ public class FontBlancMain {
             SimpleMatrix encrypted_vec = globals.e.gen_safe_vec(unencrypted_vec);
             //System.out.println(Arrays.toString(unencrypted_vec));
             for(int i = 0; i < 4; i++) {
-               System.out.print((byte)unencrypted_vec[i] + " ");
+               //System.out.print((byte)unencrypted_vec[i] + " ");
                //System.out.println(encrypted_vec.get(i,0) + " ");
                out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
             }
-            System.out.println();
+            //System.out.println();
             unencrypted_vec = unencrypted_vec_nxt;
          }                             
 		}
@@ -132,6 +135,7 @@ public class FontBlancMain {
    Does not write bytes designated as EOF characters
    */
    public static void decrypt(Globals globals, Scanner in, FileOutputStream out) throws IOException {
+      SimpleMatrix decryptionMat = globals.e.encryptionMatrix.invert();
       while(in.hasNextLine()) {
          double[][] safe_vec = new double[4][1];
          for(int i = 0; i < 4; i++) {
@@ -141,15 +145,13 @@ public class FontBlancMain {
                safe_vec[i][0] = Double.valueOf(line);
             }
          }
-         SimpleMatrix decrypted = globals.e.gen_real_mat(safe_vec);
+         SimpleMatrix decrypted = globals.e.gen_real_mat(safe_vec, decryptionMat);
          for(int i = 0; i < 4; i++) {
 				//prevents writing extra zero value bytes at end of file
 				if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
-					System.out.print((byte) Math.round(decrypted.get(i,0)) + " ");
-               out.write((byte) Math.round(decrypted.get(i,0)));
+               out.write((byte) ((Math.round(decrypted.get(i,0)) >> 0) & 0xff));
 				}
          }
-         System.out.println();
       }   
    }
    

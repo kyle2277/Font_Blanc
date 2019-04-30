@@ -11,7 +11,7 @@ public class EncoderDecoder_FB {
    //master password
    private String encodeKey;
    //change of basis matrix
-   private SimpleMatrix encryptionMatrix;
+   public SimpleMatrix encryptionMatrix;
    public boolean fatal = false;
    // end of file byte indicator
    public final int EOF = -1;
@@ -52,18 +52,17 @@ public class EncoderDecoder_FB {
    /*
    Takes encoded byte array and returns unencrypted byte arrray
    */
-   public SimpleMatrix gen_real_mat(double[][] safe_vec) {
+   public SimpleMatrix gen_real_mat(double[][] safe_vec, SimpleMatrix decryptionMat) {
       SimpleMatrix encrypted_vec = new SimpleMatrix(safe_vec);
-      return decryptVec(encrypted_vec);
+      return decryptVec(encrypted_vec, decryptionMat);
    }
    
    /*
 	Takes encrypted vector and applies change of basis to un-encrypt
 	returns unencrypted vector
 	*/
-   public SimpleMatrix decryptVec(SimpleMatrix encrypted_vec) {
+   public SimpleMatrix decryptVec(SimpleMatrix encrypted_vec, SimpleMatrix decryptionMat) {
       //decryption matrix = inverse of encryption matrix
-      SimpleMatrix decryptionMat = encryptionMatrix.invert();
       SimpleMatrix decrypted_vec = decryptionMat.mult(encrypted_vec);
       return decrypted_vec;
    }
