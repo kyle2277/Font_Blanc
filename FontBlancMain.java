@@ -102,6 +102,7 @@ public class FontBlancMain {
    Changes all 0 bytes at end of file to EOF character
    */
    public static void encrypt(Globals globals, FileInputStream in, FileWriter out) throws IOException {
+      long max = 0;
       boolean last = false;
       byte[] unencrypted_vec = new byte[4];
       int off = 0;
@@ -122,12 +123,17 @@ public class FontBlancMain {
             for(int i = 0; i < 4; i++) {
                //System.out.print((byte)unencrypted_vec[i] + " ");
                //System.out.println(encrypted_vec.get(i,0) + " ");
-               out.write(Math.round(encrypted_vec.get(i,0)) + "\n");
+               long val = Math.round(encrypted_vec.get(i,0));
+               if (max < val) {
+                  max = val;
+               }
+               out.write(val + "\n");
             }
             //System.out.println();
             unencrypted_vec = unencrypted_vec_nxt;
          }                             
 		}
+      System.out.println("Max val: " + max);
    }
    
    /*
@@ -149,7 +155,7 @@ public class FontBlancMain {
          for(int i = 0; i < 4; i++) {
 				//prevents writing extra zero value bytes at end of file
 				if((Math.round(decrypted.get(i,0)) != -1) || (in.hasNextLine())) {
-               out.write((byte) ((Math.round(decrypted.get(i,0)) >> 0) & 0xff));
+               out.write((byte) (Math.round(decrypted.get(i,0)) & 0xff));
 				}
          }
       }   

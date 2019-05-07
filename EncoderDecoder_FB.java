@@ -103,7 +103,7 @@ public class EncoderDecoder_FB {
          fatal = true;
       } else {
          encryptionMatrix = gen;
-         //encryptionMatrix.print();
+         encryptionMatrix.print();
       }
    }
    
@@ -112,12 +112,14 @@ public class EncoderDecoder_FB {
 	for creation of change of basis matrix
 	*/
    public String extend(String numStr) {
-      if (numStr.length() < 16) {
-         for (int i = 0; i < (16 - numStr.length()); i++) {
-            numStr = numStr + "0";
+      int length = numStr.length();
+      if (length < 16) {
+         StringBuilder str = new StringBuilder(numStr);
+         for (int i = 0; i < (16 - length); i++) {
+            str.append("0");
          }
+         numStr = str.toString();
       }
-      //System.out.println(numStr);
       return numStr;
    }
    
